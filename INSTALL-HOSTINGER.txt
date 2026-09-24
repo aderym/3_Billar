@@ -41,3 +41,6 @@ datos distintas: sus usuarios, contrasenas y torneos no se transfieren
 automaticamente. El DNS de billar.osprestabar.com debe apuntar a la
 aplicacion Hostinger si quieres servir desde Hostinger; no puede apuntar
 al mismo tiempo al despliegue de ChatGPT Sites.
+
+
+essto es unbio que hioce
