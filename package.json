@@ -1,0 +1,12 @@
+{
+  "name": "osp-billiards-play-hostinger",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "setup": "node server/setup.mjs",
+    "check": "node --check server/index.mjs && node --check server/setup.mjs && node --check server/database.mjs"
+  }
+}
