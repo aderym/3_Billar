@@ -39,6 +39,9 @@ http.createServer(async (incoming, outgoing) => {
     for (const [name, value] of Object.entries(incoming.headers)) {
       if (name !== 'oai-authenticated-user-email' && value != null) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
     }
+    if (process.env.OSP_ALLOW_LOCAL_SETUP === '1' && !headers.has('oai-authenticated-user-email')) {
+      headers.set('oai-authenticated-user-email', process.env.OSP_LOCAL_OWNER_EMAIL || 'local-owner@localhost');
+    }
     // Sites' owner identity is platform specific. This server uses the local setup command.
     const init = { method: incoming.method, headers };
     if (incoming.method !== 'GET' && incoming.method !== 'HEAD') init.body = Buffer.concat(chunks);
