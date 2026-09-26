@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS groups (id TEXT PRIMARY KEY, name TEXT NOT NULL, owner_id TEXT NOT NULL, state TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, group_id TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), name TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT UNIQUE, phone TEXT UNIQUE, password_hash TEXT NOT NULL, salt TEXT NOT NULL, player_id TEXT, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, avatar_updated_at INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(group_id) REFERENCES groups(id));
+CREATE INDEX IF NOT EXISTS accounts_group ON accounts(group_id);
+CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, account_id TEXT NOT NULL, expires_at INTEGER NOT NULL, FOREIGN KEY(account_id) REFERENCES accounts(id));
+CREATE INDEX IF NOT EXISTS sessions_account ON sessions(account_id);
+CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, group_id TEXT NOT NULL, account_id TEXT, kind TEXT NOT NULL, body TEXT NOT NULL, match_id TEXT, created_at INTEGER NOT NULL, FOREIGN KEY(group_id) REFERENCES groups(id));
+CREATE INDEX IF NOT EXISTS messages_group_time ON messages(group_id,created_at);
+CREATE TABLE IF NOT EXISTS signals (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id TEXT NOT NULL, room TEXT NOT NULL, role TEXT NOT NULL, client TEXT NOT NULL, type TEXT NOT NULL, data TEXT, created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS signals_room ON signals(group_id,room,id);
+CREATE TABLE IF NOT EXISTS tournament_history (group_id TEXT NOT NULL, event_key TEXT NOT NULL, name TEXT NOT NULL, state TEXT NOT NULL, ended_at INTEGER NOT NULL, PRIMARY KEY(group_id,event_key));
+CREATE TABLE IF NOT EXISTS event_responses (group_id TEXT NOT NULL, event_key TEXT NOT NULL, player_id TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('accepted','declined')), reason TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL, PRIMARY KEY(group_id,event_key,player_id));
+CREATE INDEX IF NOT EXISTS event_responses_event ON event_responses(group_id,event_key);
+CREATE TABLE IF NOT EXISTS practice_rooms (id TEXT PRIMARY KEY NOT NULL, group_id TEXT NOT NULL, creator_account_id TEXT NOT NULL, opponent_account_id TEXT, status TEXT NOT NULL DEFAULT 'pending', state TEXT, turn_account_id TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(group_id) REFERENCES groups(id), FOREIGN KEY(creator_account_id) REFERENCES accounts(id), FOREIGN KEY(opponent_account_id) REFERENCES accounts(id), FOREIGN KEY(turn_account_id) REFERENCES accounts(id));
+CREATE INDEX IF NOT EXISTS idx_practice_rooms_group_updated ON practice_rooms(group_id, updated_at);
+CREATE INDEX IF NOT EXISTS idx_practice_rooms_opponent_status ON practice_rooms(opponent_account_id, status);
+CREATE TABLE IF NOT EXISTS access_requests (id TEXT PRIMARY KEY NOT NULL, group_id TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('player_signup','password_reset')), name TEXT NOT NULL, username TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '', phone TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','resolved','dismissed')), created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(group_id) REFERENCES groups(id));
+CREATE INDEX IF NOT EXISTS access_requests_group_status ON access_requests(group_id,status,created_at);

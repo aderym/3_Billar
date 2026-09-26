@@ -1,45 +1,37 @@
-OSP BILLIARDS PLAY — INSTALACION COMPLETA EN HOSTINGER
+OSP BILLIARDS PLAY — PAQUETE COMPLETO NODE.JS PARA HOSTINGER / VPS
 
-ESTE ZIP ES UNA APLICACION NODE.JS, NO UN SITIO ESTATICO.
-No subas solamente public/ a public_html ni uses un .htaccess que
-redirija /api hacia public/: la API de login y torneos necesita Node.js.
+Esta versión contiene public/, server/, worker/, schema/ y package.json.
+Usa Node.js 22.13 o superior. En Hostinger despliega el ZIP como aplicación
+Node.js, con npm start y el dominio apuntando al proceso Node. No uses .htaccess
+para /api: las rutas de login, torneos, pagos y webhook requieren Node.
 
-1. En Hostinger crea una aplicacion Node.js (o un sitio Node.js en tu VPS).
-   Necesitas Node.js 22.13 o posterior y almacenamiento persistente.
+ACTUALIZAR SIN PERDER DATOS
+1. Haz copia de seguridad de storage/ (o toda la carpeta OSP_DATA_DIR),
+   incluyendo osp.sqlite, fotos, tv-images y billing.key.
+2. Detén el proceso Node; reemplaza public/, server/, worker/, schema/ y
+   package.json con los del ZIP. NO borres ni reemplaces storage/.
+3. Reinicia con npm start. La aplicación crea las dos nuevas tablas de cobro
+   en la base SQLite existente; no borra locales, usuarios ni torneos.
+4. /health debe mostrar OK y /api/session debe devolver JSON.
 
-2. Extrae TODO el ZIP en la carpeta raiz de la aplicacion. En esa carpeta
-   deben quedar package.json, public/, server/, worker/ y schema/ al mismo nivel.
-   No hace falta npm install: no hay dependencias externas.
+PRIMER INGRESO
+La cuenta original del propietario es username osp, password 10101010.
+Entra como osp y cambia la contraseña en el panel del propietario antes de
+crear locales. Solo osp crea locales y administradores; los administradores
+de un local crean jugadores. No es necesario ejecutar npm run setup.
 
-3. Configura el comando de inicio como: npm start
-   Alternativa: node server/index.mjs
-   Si Hostinger asigna PORT, el servidor lo lee automaticamente; en un VPS
-   puedes definir PORT=3000. Conecta el dominio a ESTA aplicacion Node.js
-   desde Hostinger. No establezcas public/ como aplicacion separada.
+COBROS STRIPE
+En el panel osp introduce precio mensual USD, Stripe Public Key, Stripe Secret
+Key y el secreto de firma del webhook (whsec_...). En Stripe registra
+https://TU-DOMINIO/api/stripe/webhook para estos eventos:
+checkout.session.completed, customer.subscription.created,
+customer.subscription.updated y customer.subscription.deleted.
+El administrador de cada local paga desde Venue access. Los locales existentes
+tienen 30 días de prueba al activar los cobros. Nuevos locales creados con
+cobros activos también reciben 30 días. El precio modificado se aplica a nuevas
+suscripciones; para cambiar las existentes usa Stripe Billing. Las claves
+secretas se guardan cifradas y el archivo storage/billing.key es necesario para
+leerlas después de una migración. No publiques storage/ ni lo incluyas en ZIP.
 
-4. Configura OSP_DATA_DIR con una carpeta persistente y escribible, fuera
-   del directorio publico. Si no la configuras, se crea storage/ dentro
-   de la carpeta de la aplicacion. Haz copia de seguridad de esa carpeta.
-
-5. Antes del primer login, abre una terminal en la raiz de la aplicacion
-   y ejecuta: npm run setup
-   Escribe el nombre del local, nombre de admin, usuario y contrasena.
-   El programa no incluye credenciales por defecto. La contrasena se ve
-   mientras la escribes en la terminal: usa una terminal privada.
-
-6. Comprueba estas rutas con el dominio ya conectado:
-   /health          -> OK
-   /api/session     -> JSON, por ejemplo {"account":null} sin login
-   /api/setup       -> JSON
-
-   Si /api/session empieza con <!DOCTYPE, Hostinger esta sirviendo HTML
-   en vez de enviar las peticiones al servidor Node.js. Revisa que el
-   proceso este iniciado y que el dominio apunte a la aplicacion Node.
-
-El despliegue previo de ChatGPT Sites y esta instalacion tienen bases de
-datos distintas: sus usuarios, contrasenas y torneos no se transfieren
-automaticamente. El DNS de billar.osprestabar.com debe apuntar a la
-aplicacion Hostinger si quieres servir desde Hostinger; no puede apuntar
-al mismo tiempo al despliegue de ChatGPT Sites.
-
-
+Las bases de ChatGPT Sites y VPS siguen siendo independientes; este paquete
+conserva los datos de tu instalación VPS cuando mantienes su storage/.

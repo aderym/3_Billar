@@ -2,7 +2,7 @@ import http from 'node:http';
 import { Readable } from 'node:stream';
 import fs from 'node:fs';
 import path from 'node:path';
-import { db, bucket, billingEncryptionKey } from './database.mjs';
+import { db, bucket } from './database.mjs';
 import site from '../worker/index.js';
 
 const port = Number(process.env.PORT || 3000);
@@ -39,10 +39,13 @@ http.createServer(async (incoming, outgoing) => {
     for (const [name, value] of Object.entries(incoming.headers)) {
       if (name !== 'oai-authenticated-user-email' && value != null) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
     }
+    if (process.env.OSP_ALLOW_LOCAL_SETUP === '1' && !headers.has('oai-authenticated-user-email')) {
+      headers.set('oai-authenticated-user-email', process.env.OSP_LOCAL_OWNER_EMAIL || 'local-owner@localhost');
+    }
     // Sites' owner identity is platform specific. This server uses the local setup command.
     const init = { method: incoming.method, headers };
     if (incoming.method !== 'GET' && incoming.method !== 'HEAD') init.body = Buffer.concat(chunks);
-    const response = await site.fetch(new Request(url, init), { DB: db, BUCKET: bucket, BILLING_ENCRYPTION_KEY: billingEncryptionKey });
+    const response = await site.fetch(new Request(url, init), { DB: db, BUCKET: bucket });
     const responseHeaders = Object.fromEntries(response.headers);
     const cookies = response.headers.getSetCookie?.();
     if (cookies?.length) responseHeaders['set-cookie'] = cookies;
