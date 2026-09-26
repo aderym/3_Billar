@@ -42,7 +42,12 @@ http.createServer(async (incoming, outgoing) => {
     // Sites' owner identity is platform specific. This server uses the local setup command.
     const init = { method: incoming.method, headers };
     if (incoming.method !== 'GET' && incoming.method !== 'HEAD') init.body = Buffer.concat(chunks);
-    const response = await site.fetch(new Request(url, init), { DB: db, BUCKET: bucket, BILLING_ENCRYPTION_KEY: billingEncryptionKey });
+    const response = await site.fetch(new Request(url, init), {
+      DB: db,
+      BUCKET: bucket,
+      BILLING_ENCRYPTION_KEY: billingEncryptionKey,
+      OWNER_BOOTSTRAP_PASSWORD: process.env.OWNER_BOOTSTRAP_PASSWORD
+    });
     const responseHeaders = Object.fromEntries(response.headers);
     const cookies = response.headers.getSetCookie?.();
     if (cookies?.length) responseHeaders['set-cookie'] = cookies;

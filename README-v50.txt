@@ -1,1 +1,0 @@
-OSP Billiards Play v50: compact OSP venue rows, responsive action buttons, single venue status action, and collapsible venue/team creation forms. All v49 venue, billing and team management features remain. Full Hostinger/VPS code included. Preserve storage/ and billing.key; replace code and restart Node. Do not run setup on an existing installation.

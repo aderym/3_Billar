@@ -1,1 +1,0 @@
-OSP Billiards Play v48: the button on the venue payment screen is labeled Login and opens the sign-in screen. Other session sign-out buttons retain their labels. Full Hostinger/VPS code is included. Preserve your existing storage/ folder and its database, billing.key and uploads. Replace code files and restart Node; do not run setup on an existing installation.
