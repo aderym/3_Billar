@@ -305,15 +305,21 @@
   ] : [];
 
   let language = localStorage.getItem('osp-language') || 'es';
+  const originalText = new WeakMap();
   const t = (key, vars = {}) => {
     let value = dictionaries[language]?.[key] ?? dictionaries.en[key] ?? key;
     return value.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? '');
   };
 
   function translateElement(root = document) {
-    const nodes = root.querySelectorAll ? root.querySelectorAll('*') : [];
+    const nodes = root.nodeType === Node.ELEMENT_NODE
+      ? [root, ...root.querySelectorAll('*')]
+      : root.querySelectorAll ? root.querySelectorAll('*') : [];
     for (const element of nodes) {
       if (element.matches('script,style')) continue;
+      for (const child of element.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE && !originalText.has(child)) originalText.set(child, child.nodeValue);
+      }
       if (element.dataset.i18n) element.textContent = t(element.dataset.i18n);
       for (const attribute of ['placeholder', 'title', 'aria-label']) {
         const key = element.dataset[`i18n${attribute[0].toUpperCase()}${attribute.slice(1)}`];
@@ -335,12 +341,14 @@
     while (walker.nextNode()) textNodes.push(walker.currentNode);
     for (const node of textNodes) {
       if (node.parentElement?.closest('script,style,select,#osp-language-control')) continue;
-      const source = node.nodeValue.trim();
+      if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+      const original = originalText.get(node);
+      const source = original.trim();
       if (!source) continue;
       const key = phrases[source];
       let translated = key ? t(key) : source;
       if (!key && language === 'es') for (const [from, to] of replacements(language)) translated = translated.split(from).join(to);
-      if (translated !== source) node.nodeValue = node.nodeValue.replace(source, translated);
+      node.nodeValue = original.replace(source, translated);
     }
   }
 
@@ -350,7 +358,13 @@
     document.documentElement.lang = language;
     translateElement(document);
     const selector = document.querySelector('#osp-language');
-    if (selector) selector.value = language;
+    if (selector) {
+      selector.value = language;
+      selector.setAttribute('aria-label', t('language'));
+      const label = document.querySelector('#osp-language-control > span');
+      if (label) label.textContent = t('language');
+    }
+    window.dispatchEvent(new CustomEvent('osp-language-change', { detail: { language } }));
   }
 
   function install() {
