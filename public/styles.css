@@ -174,3 +174,47 @@ body{background:radial-gradient(circle at 78% -9%,#174d7b44,transparent 42%),#06
 .owner-team-create .auth-form{max-width:780px}
 @media(max-width:1320px){.owner-venue-row{grid-template-columns:1fr}.owner-venue-row .actions{justify-content:flex-start;max-width:none}}
 @media(max-width:550px){.owner-venue-row .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.owner-venue-row .btn.small{min-width:0}.owner-venue-name strong{white-space:normal}.owner-venue-row .row-main{min-width:0}}
+
+/* Broadcast graphics: scores remain separate from camera and announcement overlays. */
+.tv-persistent-results{display:flex;align-items:center;gap:18px;margin-top:16px;padding:11px 16px;border:1px solid #77d4ed82;border-radius:12px;background:linear-gradient(90deg,#063149,#092235);box-shadow:0 12px 30px #0005;color:#fff;min-height:66px}.tv-persistent-label{flex:none;color:#9cecff;font-size:12px;font-weight:900;letter-spacing:.18em}.tv-persistent-list{display:flex;align-items:center;gap:10px;min-width:0;overflow-x:auto;scrollbar-width:thin}.tv-persistent-item{display:flex;align-items:center;gap:10px;flex:none;padding:8px 13px;border-radius:8px;background:#ffffff0c;font-size:clamp(13px,1.15vw,18px);white-space:nowrap}.tv-persistent-item b{color:#9cecff;font-size:11px;text-transform:uppercase;letter-spacing:.08em}.tv-persistent-item strong{color:#fff;font-size:clamp(18px,1.7vw,27px);font-variant-numeric:tabular-nums}.tv-broadcast-announcement{top:clamp(53px,6vw,90px);right:clamp(10px,1.5vw,24px);width:min(28%,320px);max-height:42%;background:#061e37eb;border-color:#9eeeffad}.tv-broadcast-announcement img{max-height:19vh}.tv-broadcast .tv-score-overlay{z-index:6;background:linear-gradient(90deg,#041429f0,#082e49e8);border-color:#a8e9ff9c}.tv-event-stage .tv-broadcast-announcement{bottom:66px;top:auto;max-height:35%}@media(max-width:760px){.tv-persistent-results{align-items:flex-start;flex-direction:column;gap:7px;padding:10px}.tv-persistent-list{max-width:100%}.tv-broadcast-announcement{width:min(37%,240px);max-height:36%;padding:7px}.tv-broadcast-announcement strong{font-size:clamp(12px,3vw,20px)}}
+.tv-event-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;overflow:hidden}.tv-event-result{display:flex;flex-direction:column;gap:4px;min-width:0;padding:10px 14px;background:#0a334fc9;border:1px solid #7ed5f94d;border-radius:10px}.tv-event-result span,.tv-event-result small{font-size:clamp(10px,.85vw,13px);font-weight:800;letter-spacing:.07em;color:#9cecff}.tv-event-result strong{font:700 clamp(15px,1.5vw,25px)/1.1 'Barlow Condensed',Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tv-event-result strong b{color:#fff;font-variant-numeric:tabular-nums}@media(max-width:700px){.tv-event-results{grid-template-columns:1fr}.tv-event-result:nth-child(n+5){display:none}}
+
+/* Let the table camera show through while keeping the full scoreboard. */
+.tv-broadcast .tv-camera .tv-score-overlay{background:linear-gradient(90deg,#04142952,#082e494d);border:1px solid #a8e9ff80;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;pointer-events:none;text-shadow:0 2px 6px #000,0 0 16px #000}
+.tv-event-idle-card{display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:130px}.tv-event-idle-card strong{font:700 clamp(22px,2.4vw,38px)/1 'Barlow Condensed',Arial,sans-serif;text-transform:uppercase}.tv-event-idle-card small{color:#a8d8e9;font-size:clamp(11px,.9vw,14px);font-weight:700}
+
+/* Fit the live table grid on a television without an internal scrollbar. */
+.tv-event-scores{justify-content:flex-start;padding:clamp(16px,2.3vw,36px);padding-bottom:clamp(24px,3vw,45px)}
+.tv-event-scores h2{font-size:clamp(35px,4vw,62px);margin:5px 0 14px}
+.tv-event-scores .tv-event-score-grid{flex:1;min-height:0;max-height:none;overflow:hidden;grid-auto-rows:minmax(0,1fr);gap:clamp(6px,.9vw,13px)}
+.tv-event-scores .tv-event-score-card{min-height:0;padding:clamp(7px,1vw,14px)}
+.tv-event-scores .tv-event-idle-card{gap:clamp(3px,.5vw,7px)}
+.tv-event-scores .tv-event-idle-card strong{font-size:clamp(18px,2vw,31px)}
+.tv-event-scores .tv-event-card-label{margin-bottom:5px}
+@media(max-width:620px){.tv-event-scores{padding:12px 12px 28px}.tv-event-scores h2{font-size:clamp(28px,7vw,42px);margin:3px 0 8px}.tv-event-scores .tv-event-score-card{padding:6px}.tv-event-scores .tv-event-card-label{font-size:10px;margin-bottom:2px}.tv-event-scores .tv-event-idle-card strong{font-size:clamp(16px,4vw,23px)}.tv-event-scores .tv-event-idle-card small{font-size:10px}}
+
+/* Screen-filling TV layout. Fullscreen is requested on the document element. */
+html:fullscreen,html:fullscreen body,html:fullscreen #app{width:100%;height:100%;overflow:hidden}
+html:fullscreen .tv-broadcast{height:100dvh;min-height:0;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:clamp(4px,.7vh,10px);padding:clamp(6px,1vw,14px)}
+html:fullscreen .tv-broadcast .tv-head{min-height:0;padding-bottom:clamp(3px,.6vh,9px)}
+html:fullscreen .tv-broadcast .tv-head h1{font-size:clamp(18px,2.5vw,42px);margin:2px 0}
+html:fullscreen .tv-broadcast .tv-head img{width:clamp(40px,6vw,90px);height:clamp(30px,5vh,56px)}
+html:fullscreen .tv-broadcast .tv-event-meta{font-size:clamp(9px,.8vw,12px);margin-top:3px}
+html:fullscreen .tv-broadcast .tv-grid{min-height:0;min-width:0;margin:0;gap:clamp(5px,.7vw,12px);grid-template-columns:minmax(0,1.8fr) minmax(250px,.8fr)}
+html:fullscreen .tv-broadcast .tv-stage{min-height:0;position:relative;display:grid;grid-template-rows:minmax(0,1fr)}
+html:fullscreen .tv-broadcast .tv-camera,html:fullscreen .tv-broadcast .tv-event-stage{height:100%;min-height:0;max-height:none;box-shadow:none}
+html:fullscreen .tv-broadcast .tv-sidepanel{min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:repeat(4,minmax(0,1fr));gap:clamp(3px,.5vh,7px);overflow:hidden}
+html:fullscreen .tv-broadcast .tv-panel{min-height:0;padding:clamp(5px,.55vw,9px);overflow:hidden;backdrop-filter:none}
+html:fullscreen .tv-broadcast .tv-panel-heading{margin-bottom:2px}
+html:fullscreen .tv-broadcast .tv-board-list{max-height:none;overflow:hidden;gap:1px}
+html:fullscreen .tv-broadcast .tv-board-row,html:fullscreen .tv-broadcast .tv-next-row,html:fullscreen .tv-broadcast .tv-result-row,html:fullscreen .tv-broadcast .tv-standing{padding:2px 3px}
+html:fullscreen .tv-broadcast .tv-controls{position:absolute;z-index:8;top:7px;right:7px;padding:0;gap:0}
+html:fullscreen .tv-broadcast .tv-controls .field,html:fullscreen .tv-broadcast .tv-controls [data-action="admin"]{display:none}
+html:fullscreen .tv-broadcast .tv-controls [data-action="fullscreen"]{font-size:11px;padding:5px 8px;background:#041a30ca}
+html:fullscreen .tv-broadcast .tv-persistent-results{margin:0;min-height:clamp(32px,5vh,55px);padding:4px 9px}
+html:fullscreen .tv-broadcast .tv-ticker{margin:0;min-height:clamp(26px,4vh,40px)}
+html:fullscreen .tv-broadcast .tv-event-content{padding:clamp(10px,2vw,34px);padding-bottom:clamp(22px,3vh,40px)}
+html:fullscreen .tv-broadcast .tv-event-content h2{font-size:clamp(24px,4vw,62px);margin:4px 0 10px}
+html:fullscreen .tv-broadcast .tv-event-score-grid,html:fullscreen .tv-broadcast .tv-event-rounds,html:fullscreen .tv-broadcast .tv-event-two-col,html:fullscreen .tv-broadcast .tv-event-results{max-height:none;min-height:0;overflow:hidden}
+@media(max-width:900px), (orientation:portrait){html:fullscreen .tv-broadcast .tv-grid{grid-template-columns:1fr;grid-template-rows:minmax(0,2fr) minmax(0,1fr)}html:fullscreen .tv-broadcast .tv-sidepanel{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr;gap:5px}html:fullscreen .tv-broadcast .tv-sidepanel .tv-panel:nth-child(n+3){display:none}html:fullscreen .tv-broadcast .tv-camera,html:fullscreen .tv-broadcast .tv-event-stage{height:100%}html:fullscreen .tv-broadcast .tv-head h1{font-size:clamp(17px,3vw,30px)}}
+@media(max-height:550px){html:fullscreen .tv-broadcast{gap:3px;padding:4px}html:fullscreen .tv-broadcast .tv-head{padding-bottom:2px}html:fullscreen .tv-broadcast .tv-head img{height:29px}html:fullscreen .tv-broadcast .tv-event-meta{display:none}html:fullscreen .tv-broadcast .tv-ticker{display:none}html:fullscreen .tv-broadcast .tv-event-content{padding:8px 10px 23px}html:fullscreen .tv-broadcast .tv-event-content h2{font-size:clamp(22px,4vw,42px);margin:2px 0 6px}}

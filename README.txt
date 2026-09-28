@@ -35,3 +35,17 @@ leerlas después de una migración. No publiques storage/ ni lo incluyas en ZIP.
 
 Las bases de ChatGPT Sites y VPS siguen siendo independientes; este paquete
 conserva los datos de tu instalación VPS cuando mantienes su storage/.
+
+PROYECCIÓN DE TORNEOS EN TV
+Desde el panel del administrador, usa “Featured table TV”, “Full event TV” o
+“View on TV” en una cámara. El enlace incluye el identificador del local y
+abre una pantalla de emisión de solo lectura sin pedir login en la TV.
+La pantalla recibe automáticamente marcadores, mesas, resultados y anuncios.
+“Full event TV” alterna presentación, marcadores, cuadro, clasificación y
+resultados finales; la franja de marcadores sigue visible durante los anuncios.
+
+Para emitir vídeo, abre la cámara desde el panel de administración en otro
+navegador/equipo, pulsa “Start angle” y mantén esa pestaña abierta. La vista
+de TV se conecta a ese ángulo automáticamente. Las cámaras necesitan HTTPS
+y en algunas redes puede hacer falta un servidor TURN. Los anuncios de texto
+e imagen se pueden publicar desde Mensajes o desde la pantalla de cámaras.

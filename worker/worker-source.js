@@ -16,7 +16,7 @@ function initial(){return {name:'New Tournament',game:'8-ball',race:3,entry:0,pr
 function cleanAccountInput(x){let name=String(x.name||'').trim().slice(0,70),username=String(x.username||'').trim().toLowerCase(),email=String(x.email||'').trim().toLowerCase()||null,phone=String(x.phone||'').replace(/\D/g,'')||null,password=String(x.password||'');if(!name||username==='osp'||!/^[-._a-z0-9]{3,40}$/.test(username)||email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||phone&&phone.length<10||password.length<8||password.length>128)throw Error('Enter a name, unique username, and password of at least 8 characters. Phone numbers need at least 10 digits.');return {name,username,email,phone,password}}
 async function createAccount(db,x,group,role,playerId=null){let v=cleanAccountInput(x),salt=hex(crypto.getRandomValues(new Uint8Array(16))),a={id:id(),group_id:group,role,name:v.name,username:v.username,email:v.email,phone:v.phone,player_id:playerId};await db.prepare('INSERT INTO accounts (id,group_id,role,name,username,email,phone,password_hash,salt,player_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(a.id,group,role,v.name,v.username,v.email,v.phone,await hash(v.password,salt),salt,playerId,now()).run();return a}
 async function createVenue(db,x,owner){let v=cleanAccountInput(x),g=id(),a={id:id(),group_id:g,role:'admin',name:v.name,username:v.username,email:v.email,phone:v.phone,player_id:null},salt=hex(crypto.getRandomValues(new Uint8Array(16))),s=initial();s.name=String(x.groupName||'New venue').trim().slice(0,80)||'New venue';let created=now();await db.batch([db.prepare('INSERT INTO groups VALUES (?,?,?,?,?,?)').bind(g,s.name,owner,JSON.stringify(s),1,created),db.prepare('INSERT INTO accounts (id,group_id,role,name,username,email,phone,password_hash,salt,player_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(a.id,g,'admin',v.name,v.username,v.email,v.phone,await hash(v.password,salt),salt,null,created),db.prepare('INSERT OR REPLACE INTO venue_admin_permissions (account_id,group_id,can_manage_admins,created_at) VALUES (?,?,1,?)').bind(a.id,g,created)]);return a}
-function publicAccount(a){return {id:a.id,name:a.name,username:a.username,email:a.email,phone:a.phone,role:isOwnerAccount(a)?'owner':a.role,playerId:a.player_id,player_id:a.player_id,active:!!a.active,avatarVersion:a.avatar_updated_at||0,mustChangePassword:!!a.mustChangePassword}}
+function publicAccount(a){return {id:a.id,groupId:a.group_id,name:a.name,username:a.username,email:a.email,phone:a.phone,role:isOwnerAccount(a)?'owner':a.role,playerId:a.player_id,player_id:a.player_id,active:!!a.active,avatarVersion:a.avatar_updated_at||0,mustChangePassword:!!a.mustChangePassword}}
 async function readPhoto(req){let type=req.headers.get('content-type')||'',length=Number(req.headers.get('content-length')||0);if(length>2097152)return {error:err('Choose an image smaller than 2 MB.',413)};let bytes=new Uint8Array(await req.arrayBuffer());if(!bytes.length||bytes.length>2097152)return {error:err('Choose an image smaller than 2 MB.',413)};let png=bytes.length>8&&bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71&&bytes[4]===13&&bytes[5]===10&&bytes[6]===26&&bytes[7]===10,jpeg=bytes.length>3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255,webp=bytes.length>12&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP',mime=png?'image/png':jpeg?'image/jpeg':webp?'image/webp':null;if(!mime||type&&!type.startsWith(mime))return {error:err('Use a PNG, JPEG, or WebP image.')};return {bytes,mime}}
 async function body(req){if(Number(req.headers.get('content-length')||0)>1500000)throw Error('Request too large');let x=await req.json();if(!x||typeof x!=='object')throw Error('Invalid data');return x}
 async function announcements(db,group,accountId,kind,text,matchId=null){await db.prepare('INSERT INTO messages VALUES (?,?,?,?,?,?,?)').bind(id(),group,accountId,kind,text.slice(0,500),matchId,now()).run()}
@@ -43,6 +43,40 @@ async function stripeWebhook(req,env){let db=env.DB,c=await db.prepare('SELECT w
 async function paymentHistoryForGroup(db,env,groupId){let stored=await db.prepare('SELECT id,method,amount_cents,currency,paid_at,period_end,note,stripe_invoice_id,receipt_url FROM venue_payments WHERE group_id=? ORDER BY paid_at DESC LIMIT 100').bind(groupId).all(),payments=stored.results;let billing=await db.prepare('SELECT customer_id,subscription_id FROM venue_billing WHERE group_id=?').bind(groupId).first(),config=await db.prepare('SELECT secret_cipher FROM billing_config WHERE id=1').first();if(billing?.customer_id&&config?.secret_cipher){try{let secret=await decrypt(env,config.secret_cipher),endpoint='https://api.stripe.com/v1/invoices?customer='+encodeURIComponent(billing.customer_id)+'&status=paid&limit=50',response=await fetch(endpoint,{headers:{Authorization:'Bearer '+secret}});if(response.ok){let external=await response.json(),seen=new Set(payments.map(p=>p.stripe_invoice_id).filter(Boolean));for(let invoice of external.data||[]){let sub=invoice.subscription||invoice.parent?.subscription_details?.subscription;if(invoice.amount_paid<=0||!sub||sub!==billing.subscription_id||seen.has(invoice.id))continue;payments.push({id:invoice.id,method:'stripe',amount_cents:invoice.amount_paid,currency:invoice.currency||'usd',paid_at:(invoice.status_transitions?.paid_at||invoice.created)*1000,period_end:Math.max(0,...(invoice.lines?.data||[]).map(line=>(line.period?.end||0)*1000)),note:'',stripe_invoice_id:invoice.id,receipt_url:invoice.hosted_invoice_url||null});seen.add(invoice.id)}}}catch(error){console.error('Unable to retrieve Stripe invoice history',error)}}return payments.sort((x,y)=>y.paid_at-x.paid_at).slice(0,100)}
 async function syncManualAccess(db,groupId){let row=await db.prepare("SELECT MAX(period_end) AS until FROM venue_payments WHERE group_id=? AND method IN ('cash','cashapp','zelle','direct') AND stripe_invoice_id IS NULL").bind(groupId).first(),until=Number(row?.until||0);await db.batch([db.prepare('INSERT INTO venue_manual_terms (group_id,access_until) VALUES (?,?) ON CONFLICT(group_id) DO UPDATE SET access_until=excluded.access_until').bind(groupId,until),db.prepare("UPDATE venue_access_control SET manual_state=CASE WHEN ?>? THEN 'active' ELSE 'auto' END,updated_at=? WHERE group_id=? AND manual_state='active'").bind(until,now(),now(),groupId)]);return until}
 async function api(req,env,path){let db=env.DB, method=req.method, url=new URL(req.url);if(method!=='GET'&&path!=='/api/stripe/webhook'&&req.headers.get('origin')!==url.origin)return err('Invalid request origin',403);
+ if(path==='/api/broadcast'&&method==='GET'||path==='/api/broadcast/signal'&&method==='POST'||path==='/api/broadcast/image'&&method==='GET'){
+  let venue=String(url.searchParams.get('venue')||'');
+  if(!/^[a-f0-9-]{36}$/.test(venue))return err('Broadcast not found.',404);
+  let row=await db.prepare('SELECT state,revision FROM groups WHERE id=? AND id<>?').bind(venue,OWNER_GROUP).first();
+  if(!row)return err('Broadcast not found.',404);
+  let access=await venueAccess(db,venue,env);
+  if(!access.accessActive)return err('Broadcast unavailable.',403);
+  let state=JSON.parse(row.state);
+  if(path==='/api/broadcast'){
+   let {name,game,format,race,scoring,startAt,timeZone,created,players,tables,rounds,tvAnnouncement}=state;
+   return json({rev:row.revision,state:{name,game,format,race,scoring,startAt,timeZone,created,players:(players||[]).map(p=>({id:p.id,name:p.name,seed:p.seed})),tables:(tables||[]).map(t=>({id:t.id,name:t.name,angles:(t.angles||[]).map(a=>({id:a.id,name:a.name}))})),rounds:rounds||[],tvAnnouncement:tvAnnouncement?{text:tvAnnouncement.text||'',imageId:tvAnnouncement.imageId||null}:null}});
+  }
+  if(path==='/api/broadcast/image'){
+   let imageId=String(url.searchParams.get('id')||'');
+   if(!/^[a-f0-9-]{36}$/.test(imageId)||state.tvAnnouncement?.imageId!==imageId)return err('Image not found.',404);
+   let object=await env.BUCKET.get(`tv/${venue}/${imageId}`);
+   if(!object)return err('Image not found.',404);
+   return new Response(object.body,{headers:{'content-type':object.httpMetadata?.contentType||'image/png','cache-control':'public, max-age=30','x-content-type-options':'nosniff'}});
+  }
+  let x=await body(req),room=String(x.table||''),allowed=(state.tables||[]).some(t=>(t.angles?.length?t.angles:[{id:'main'}]).some(angle=>`${t.id}_${angle.id}`===room));
+  if(!allowed)return err('Camera unavailable.',404);
+  if(x.op==='post'){
+   let role=String(x.role||''),type=String(x.type||''),client=String(x.client||'').slice(0,80),data=JSON.stringify(x.data||null);
+   if(role!=='viewer'||!['join','answer','ice'].includes(type)||!/^[-_a-zA-Z0-9]{1,80}$/.test(client)||data.length>12000)return err('Invalid camera signal.');
+   await db.prepare('INSERT INTO signals (group_id,room,role,client,type,data,created_at) VALUES (?,?,?,?,?,?,?)').bind(venue,room,role,client,type,data,now()).run();return json({ok:true});
+  }
+  if(x.op==='poll'){
+   let since=Math.max(0,Number(x.since)||0),client=String(x.client||'');
+   if(!/^[-_a-zA-Z0-9]{1,80}$/.test(client))return err('Invalid viewer.',400);
+   let rows=await db.prepare("SELECT id,role,client,type,data FROM signals WHERE group_id=? AND room=? AND id>? AND created_at>? AND role='presenter' AND client=? ORDER BY id LIMIT 80").bind(venue,room,since,now()-120000,client).all();
+   return json({last:rows.results.at(-1)?.id||since,messages:rows.results.map(m=>({...m,data:JSON.parse(m.data)}))});
+  }
+  return err('Invalid signal operation.');
+ }
  if(path==='/api/stripe/webhook'&&method==='POST')return stripeWebhook(req,env);
  if(path==='/api/setup'&&method==='GET'){let venues=await db.prepare("SELECT id,name FROM groups WHERE id<>? ORDER BY name").bind(OWNER_GROUP).all();return json({needsSetup:false,owner:false,venues:venues.results})}
  if(path==='/api/bootstrap'&&method==='POST')return err('Sign in as osp to create a venue.',403);
