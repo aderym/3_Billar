@@ -17,7 +17,7 @@
     const section = document.createElement('section');
     section.id = 'public-venue-registration';
     section.innerHTML = `<div class="divider"></div>
-      <button type="button" class="btn ghost" data-public-venue-toggle>¿Necesitas crear un local?</button>
+      <button type="button" class="btn ghost" data-public-venue-toggle>Need to create a venue?</button>
       <form class="auth-form" data-public-venue-form hidden>
         <h2>Create a new venue</h2>
         <p class="inline-help">Register your venue and create its primary administrator. Access will remain pending until monthly billing is configured.</p>

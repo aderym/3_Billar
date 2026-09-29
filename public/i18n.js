@@ -116,7 +116,31 @@
   // Substrings cover dynamic sentences that contain values such as prices,
   // dates or player names. Add new English -> Spanish pairs here as features grow.
   const replacements = language => language === 'es' ? [
+    ['Need to create a venue?', '¿Necesitas crear un local?'],
     ['Need a player account or password reset?', '¿Necesitas una cuenta de jugador o restablecer tu contraseña?'],
+    ['Hide registration form', 'Ocultar formulario de registro'],
+    ['Create a player account', 'Crear una cuenta de jugador'],
+    ['Create your player account', 'Crea tu cuenta de jugador'],
+    ['Choose your local, create your login, and start playing.', 'Elige tu local, crea tu acceso y comienza a jugar.'],
+    ['Repeat password', 'Repetir contraseña'],
+    ['Create account', 'Crear cuenta'],
+    ['Passwords do not match.', 'Las contraseñas no coinciden.'],
+    ['Player account created. You can now sign in.', 'Cuenta de jugador creada. Ya puedes iniciar sesión.'],
+    ['Hide request form', 'Ocultar formulario de solicitud'],
+    ['Request sent to your venue administrator. They will contact you using the details provided.', 'Solicitud enviada al administrador de tu local. Se pondrá en contacto contigo usando los datos proporcionados.'],
+    ['Contact your venue administrator', 'Contacta al administrador de tu local'],
+    ['The administrator reviews your request. Never include your password here.', 'El administrador revisará tu solicitud. Nunca incluyas tu contraseña aquí.'],
+    ['Select your venue', 'Selecciona tu local'],
+    ['Request', 'Solicitud'],
+    ['Create a player account', 'Crear una cuenta de jugador'],
+    ['Reset my password', 'Restablecer mi contraseña'],
+    ['Username, if you have one', 'Nombre de usuario, si tienes uno'],
+    ['Email', 'Correo'],
+    ['Phone', 'Teléfono'],
+    ['Message (optional)', 'Mensaje (opcional)'],
+    ['Anything that helps the administrator find your account', 'Cualquier dato que ayude al administrador a encontrar tu cuenta'],
+    ['Enter at least an email or phone number so the administrator can contact you.', 'Ingresa al menos un correo o número de teléfono para que el administrador pueda contactarte.'],
+    ['Send request', 'Enviar solicitud'],
     ['Enter your owner, administrator, or player account.', 'Ingresa con tu cuenta de propietario, administrador o jugador.'],
     ['Show password', 'Mostrar contraseña'],
     ['OSP BILLIARDS PLAY · VENUE ACCESS', 'OSP BILLIARDS PLAY · ACCESO AL LOCAL'],
@@ -332,6 +356,15 @@
     return value.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? '');
   };
 
+  function translateSource(source) {
+    const key = phrases[source];
+    let translated = key ? t(key) : source;
+    if (!key && language === 'es') {
+      for (const [from, to] of replacements(language)) translated = translated.split(from).join(to);
+    }
+    return translated;
+  }
+
   function translateElement(root = document) {
     const nodes = root.nodeType === Node.ELEMENT_NODE
       ? [root, ...root.querySelectorAll('*')]
@@ -356,27 +389,21 @@
       }
       if (element.children.length) continue;
       const source = element.dataset.i18nSource || element.textContent.trim();
-      const key = phrases[source];
       element.dataset.i18nSource = source;
-      if (key) element.textContent = t(key);
-      else if (language === 'es') {
-        let translated = source;
-        for (const [from, to] of replacements(language)) translated = translated.split(from).join(to);
-        if (translated !== source) element.textContent = translated;
-      }
+      const translated = translateSource(source);
+      if (element.textContent.trim() !== translated) element.textContent = translated;
     }
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     while (walker.nextNode()) textNodes.push(walker.currentNode);
     for (const node of textNodes) {
       if (node.parentElement?.closest('script,style,select,#osp-language-control')) continue;
+      if (node.parentElement?.dataset.i18nSource) continue;
       if (!originalText.has(node)) originalText.set(node, node.nodeValue);
       const original = originalText.get(node);
       const source = original.trim();
       if (!source) continue;
-      const key = phrases[source];
-      let translated = key ? t(key) : source;
-      if (!key && language === 'es') for (const [from, to] of replacements(language)) translated = translated.split(from).join(to);
+      const translated = translateSource(source);
       node.nodeValue = original.replace(source, translated);
     }
   }

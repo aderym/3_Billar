@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { db, bucket, billingEncryptionKey } from './database.mjs';
 import { registerPublicVenue } from './public-venue-registration.mjs';
+import { registerPublicPlayer } from './public-player-registration.mjs';
 import site from '../worker/index.js';
 
 const port = Number(process.env.PORT || 3000);
@@ -47,6 +48,20 @@ http.createServer(async (incoming, outgoing) => {
         const status = Number(error.status) || (error.code === 'ER_DUP_ENTRY' ? 409 : 400);
         outgoing.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
         outgoing.end(JSON.stringify({ error: error.code === 'ER_DUP_ENTRY' ? 'Username, email, or phone is already in use.' : error.message || 'Could not create the venue.' }));
+      }
+      return;
+    }
+    if (url.pathname === '/api/register-player' && incoming.method === 'POST') {
+      try {
+        const origin = incoming.headers.origin;
+        if (origin && origin !== url.origin) { outgoing.writeHead(403, { 'content-type': 'application/json' }); outgoing.end(JSON.stringify({ error: 'Invalid request origin' })); return; }
+        const result = await registerPublicPlayer(db, JSON.parse(Buffer.concat(chunks).toString('utf8')));
+        outgoing.writeHead(201, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+        outgoing.end(JSON.stringify({ ok: true, ...result }));
+      } catch (error) {
+        const status = Number(error.status) || (error.code === 'ER_DUP_ENTRY' ? 409 : 400);
+        outgoing.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+        outgoing.end(JSON.stringify({ error: error.code === 'ER_DUP_ENTRY' ? 'El usuario, correo o teléfono ya está registrado.' : error.message || 'No se pudo crear la cuenta.' }));
       }
       return;
     }
