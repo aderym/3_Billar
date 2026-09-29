@@ -123,6 +123,8 @@
     ['Monthly payment required', 'Pago mensual requerido'],
     ['Venue access is inactive.', 'El acceso al local está inactivo.'],
     ['OSP has not set the monthly amount yet.', 'OSP aún no ha establecido el monto mensual.'],
+    ['their access is inactive.', 'su acceso está inactivo.'],
+    ['access is inactive.', 'el acceso está inactivo.'],
     ['Access returns after a confirmed Stripe payment or after OSP records your payment and activates this venue for one month.', 'El acceso se restablece después de confirmar el pago en Stripe o cuando OSP registre tu pago y active este local por un mes.'],
     ['Enter your card information below. Stripe processes the card securely; OSP never receives the card number.', 'Ingresa los datos de tu tarjeta. Stripe procesa la tarjeta de forma segura; OSP nunca recibe el número de tarjeta.'],
     ['After paying by direct link, Cash App, or Zelle, upload your receipt.', 'Después de pagar mediante enlace directo, Cash App o Zelle, sube tu comprobante.'],
@@ -171,6 +173,24 @@
     ['are enabled.', 'están habilitados.'],
     ['Create venue with Venue Owner', 'Crear local con propietario'],
     ['Add administrator to a venue', 'Agregar administrador a un local'],
+    ['Venue name', 'Nombre del local'],
+    ['Name', 'Nombre'],
+    ['Username', 'Nombre de usuario'],
+    ['Email (optional)', 'Correo (opcional)'],
+    ['Phone (optional)', 'Teléfono (opcional)'],
+    ['Initial password (8+ characters)', 'Contraseña inicial (8+ caracteres)'],
+    ['Create venue', 'Crear local'],
+    ['Venue', 'Local'],
+    ['Create administrator', 'Crear administrador'],
+    ['Example: Include your venue name in the payment memo.', 'Ejemplo: incluye el nombre de tu local en el concepto del pago.'],
+    ['New password (12+ characters)', 'Nueva contraseña (12+ caracteres)'],
+    ['Change password', 'Cambiar contraseña'],
+    ['Create a new venue', 'Crear un local nuevo'],
+    ['Register your venue and create its primary administrator. Access will remain pending until monthly billing is configured.', 'Registra tu local y crea su administrador principal. El acceso quedará pendiente hasta configurar el pago mensual.'],
+    ['Your name', 'Tu nombre'],
+    ['Password (8+ characters)', 'Contraseña (8+ caracteres)'],
+    ['Cancel', 'Cancelar'],
+    ['Venue created. You can now sign in with username ', 'Local creado. Ya puedes iniciar sesión con el usuario '],
     ['Manage', 'Administrar'],
     ['Project', 'Proyecto'],
     ['Payments', 'Pagos'],
@@ -306,6 +326,7 @@
 
   let language = localStorage.getItem('osp-language') || 'es';
   const originalText = new WeakMap();
+  const originalAttributes = new WeakMap();
   const t = (key, vars = {}) => {
     let value = dictionaries[language]?.[key] ?? dictionaries.en[key] ?? key;
     return value.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? '');
@@ -323,7 +344,15 @@
       if (element.dataset.i18n) element.textContent = t(element.dataset.i18n);
       for (const attribute of ['placeholder', 'title', 'aria-label']) {
         const key = element.dataset[`i18n${attribute[0].toUpperCase()}${attribute.slice(1)}`];
-        if (key) element.setAttribute(attribute, t(key));
+        const source = element.getAttribute(attribute);
+        if (!source) continue;
+        let saved = originalAttributes.get(element);
+        if (!saved) originalAttributes.set(element, saved = {});
+        if (!saved[attribute]) saved[attribute] = source;
+        const original = saved[attribute];
+        let translated = key ? t(key) : original;
+        if (!key && language === 'es') for (const [from, to] of replacements(language)) translated = translated.split(from).join(to);
+        element.setAttribute(attribute, translated);
       }
       if (element.children.length) continue;
       const source = element.dataset.i18nSource || element.textContent.trim();
