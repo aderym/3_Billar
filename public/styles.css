@@ -167,6 +167,7 @@ body{background:radial-gradient(circle at 78% -9%,#174d7b44,transparent 42%),#06
 .owner-create-details summary:before,.owner-team-create summary:before{content:'＋';margin-right:8px;color:#6ad3ff}
 .owner-create-details[open] summary:before,.owner-team-create[open] summary:before{content:'−'}
 .owner-create-details .auth-form{padding:0 14px 14px;margin:0}
+.owner-sync-controls{display:flex;align-items:stretch;gap:8px}.owner-sync-controls input{flex:1}.owner-sync-controls .btn{flex:none;white-space:nowrap}.owner-sync-button{width:48px;padding:4px!important;font-size:26px;line-height:1}
 .owner-manage-grid{grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:17px}
 .owner-manage-card{padding:13px}
 .owner-manage-card .auth-form{margin:8px 0 0}

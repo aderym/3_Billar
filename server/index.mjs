@@ -76,7 +76,8 @@ http.createServer(async (incoming, outgoing) => {
       DB: db,
       BUCKET: bucket,
       BILLING_ENCRYPTION_KEY: billingEncryptionKey,
-      OWNER_BOOTSTRAP_PASSWORD: process.env.OWNER_BOOTSTRAP_PASSWORD
+      OWNER_BOOTSTRAP_PASSWORD: process.env.OWNER_BOOTSTRAP_PASSWORD,
+      URL_USERS_SYNC: process.env.URL_USERS_SYNC
     });
     const responseHeaders = Object.fromEntries(response.headers);
     const cookies = response.headers.getSetCookie?.();
