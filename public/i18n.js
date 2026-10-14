@@ -607,6 +607,8 @@
     ,['Waiting for players', 'Esperando jugadores']
     ,['Next match', 'Próxima partida']
     ,['NEXT MATCH', 'PRÓXIMA PARTIDA']
+    ,['PRO AIM · VIRTUAL 8-BALL', 'PRO AIM · 8-BALL VIRTUAL']
+    ,['Lobby', 'Sala']
   ] : [];
 
   let language = localStorage.getItem('osp-language') || 'es';

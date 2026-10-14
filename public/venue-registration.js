@@ -97,6 +97,37 @@
     }
   }
 
+  async function installOwnerVenueRequests() {
+    const list = document.querySelector('.owner-venue-list');
+    if (!list || list.dataset.venueRequestsLoading || list.dataset.venueRequestsInstalled) return;
+    list.dataset.venueRequestsLoading = '1';
+    try {
+      const response = await fetch('/api/owner/venue-requests', { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      const requests = data.requests || [];
+      if (!requests.length) return;
+      const section = document.createElement('section');
+      section.className = 'owner-venue-requests notice';
+      section.innerHTML = `<strong>Solicitudes de nuevos locales (${requests.length})</strong><div class="list">${requests.map(request => `<div class="row"><div class="row-main"><strong>${escapeHtml(request.venue || 'Local sin nombre')}</strong><small>${escapeHtml(request.name)} · @${escapeHtml(request.username)} · ${new Date(request.created_at).toLocaleString()}${request.email ? ` · ${escapeHtml(request.email)}` : ''}${request.phone ? ` · ${escapeHtml(request.phone)}` : ''}</small></div><button class="btn small primary" type="button" data-venue-request-status="resolved" data-id="${escapeHtml(request.id)}">Marcar revisada</button></div>`).join('')}</div>`;
+      list.before(section);
+      section.addEventListener('click', async event => {
+        const button = event.target.closest('[data-venue-request-status]');
+        if (!button) return;
+        button.disabled = true;
+        try {
+          const result = await fetch(`/api/owner/venue-requests/${encodeURIComponent(button.dataset.id)}`, { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: button.dataset.venueRequestStatus }) });
+          const body = await result.json();
+          if (!result.ok) throw Error(body.error || 'No se pudo actualizar la solicitud.');
+          location.reload();
+        } catch (error) { button.disabled = false; window.alert(error.message); }
+      });
+      list.dataset.venueRequestsInstalled = '1';
+    } finally { delete list.dataset.venueRequestsLoading; }
+  }
+
+  function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character])); }
+
   document.addEventListener('click', async event => {
     const trial = event.target.closest('[data-trial-action]');
     if (trial) {
@@ -112,11 +143,12 @@
       return;
     }
   });
-  new MutationObserver(() => { install(); normalizePlayerFlow(); installOwnerTrialControls().catch(() => {}); }).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(() => { install(); normalizePlayerFlow(); installOwnerTrialControls().catch(() => {}); installOwnerVenueRequests().catch(() => {}); }).observe(document.body, { childList: true, subtree: true });
   const initialize = () => {
     install();
     normalizePlayerFlow();
     installOwnerTrialControls().catch(() => {});
+    installOwnerVenueRequests().catch(() => {});
     setTimeout(() => installOwnerTrialControls().catch(() => {}), 1500);
     const retryTimer = setInterval(() => {
       installOwnerTrialControls().catch(() => {});

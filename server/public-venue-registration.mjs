@@ -42,7 +42,8 @@ export async function registerPublicVenue(db, input) {
     db.prepare('INSERT INTO groups (id,name,owner_id,state,revision,created_at) VALUES (?,?,?,?,?,?)').bind(groupId, groupName, OWNER_GROUP, JSON.stringify(initialState(groupName)), 1, created),
     db.prepare('INSERT INTO accounts (id,group_id,role,name,username,email,phone,password_hash,salt,player_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(accountId, groupId, 'admin', name, username, email, phone, passwordHash, salt, null, created),
     db.prepare('INSERT INTO venue_admin_permissions (account_id,group_id,can_manage_admins,created_at) VALUES (?,?,1,?)').bind(accountId, groupId, created),
-    db.prepare("INSERT INTO venue_billing (group_id,status,current_period_end,updated_at) VALUES (?,'unpaid',0,?)").bind(groupId, created)
+    db.prepare("INSERT INTO venue_billing (group_id,status,current_period_end,updated_at) VALUES (?,'unpaid',0,?)").bind(groupId, created),
+    db.prepare('INSERT INTO access_requests (id,group_id,kind,name,username,email,phone,message,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(id(), OWNER_GROUP, 'venue_signup', name, username, email || '', phone || '', JSON.stringify({ groupId, venue: groupName }), 'pending', created, created)
   ]);
   return { groupId, venue: groupName, username };
 }

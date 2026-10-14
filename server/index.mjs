@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,6 +13,8 @@ const host = process.env.HOST || '0.0.0.0';
 const maxBody = 2200000;
 const publicDir = path.resolve(import.meta.dirname, '..', 'public');
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.txt': 'text/plain; charset=utf-8' };
+const ownerSession = req => /(?:^|;\s*)osp_owner_session=([^;]+)/.exec(req.headers.cookie || '')?.[1] || /(?:^|;\s*)osp_session=([^;]+)/.exec(req.headers.cookie || '')?.[1] || '';
+const isOwnerRequest = async req => { const token = ownerSession(req); if (!token) return false; const tokenHash = createHash('sha256').update(token).digest('hex'); const account = await db.prepare('SELECT a.group_id,a.role FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE s.token_hash=? AND s.expires_at>? AND a.active=1').bind(tokenHash, Date.now()).first(); return account?.group_id === '__owner__' && account.role === 'admin'; };
 
 http.createServer(async (incoming, outgoing) => {
   try {
@@ -64,6 +67,22 @@ http.createServer(async (incoming, outgoing) => {
         outgoing.end(JSON.stringify({ error: error.code === 'ER_DUP_ENTRY' ? 'El usuario, correo o teléfono ya está registrado.' : error.message || 'No se pudo crear la cuenta.' }));
       }
       return;
+    }
+    if (url.pathname === '/api/owner/venue-requests' && incoming.method === 'GET') {
+      if (!await isOwnerRequest(incoming)) { outgoing.writeHead(403, { 'content-type': 'application/json' }); outgoing.end(JSON.stringify({ error: 'Owner access required.' })); return; }
+      const rows = (await db.prepare("SELECT id,name,username,email,phone,message,created_at FROM access_requests WHERE group_id='__owner__' AND kind='venue_signup' AND status='pending' ORDER BY created_at DESC LIMIT 100").all()).results;
+      const requests = rows.map(row => { let details = {}; try { details = JSON.parse(row.message || '{}'); } catch {} return { ...row, groupId: details.groupId || '', venue: details.venue || '' }; });
+      outgoing.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); outgoing.end(JSON.stringify({ requests })); return;
+    }
+    if (/^\/api\/owner\/venue-requests\/[^/]+$/.test(url.pathname) && incoming.method === 'PATCH') {
+      if (!await isOwnerRequest(incoming)) { outgoing.writeHead(403, { 'content-type': 'application/json' }); outgoing.end(JSON.stringify({ error: 'Owner access required.' })); return; }
+      let payload = {}; try { payload = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { payload = {}; }
+      const status = String(payload.status || '');
+      if (!['resolved', 'dismissed'].includes(status)) { outgoing.writeHead(400, { 'content-type': 'application/json' }); outgoing.end(JSON.stringify({ error: 'Invalid request status.' })); return; }
+      const requestId = decodeURIComponent(url.pathname.split('/').pop());
+      const result = await db.prepare("UPDATE access_requests SET status=?,updated_at=? WHERE id=? AND group_id='__owner__' AND kind='venue_signup' AND status='pending'").bind(status, Date.now(), requestId).run();
+      if (!result.meta.changes) { outgoing.writeHead(404, { 'content-type': 'application/json' }); outgoing.end(JSON.stringify({ error: 'Request no longer pending.' })); return; }
+      outgoing.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); outgoing.end(JSON.stringify({ ok: true })); return;
     }
     const headers = new Headers();
     for (const [name, value] of Object.entries(incoming.headers)) {
