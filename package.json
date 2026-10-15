@@ -12,6 +12,7 @@
   "scripts": {
     "start": "node --env-file=.env.local server/index.mjs",
     "setup": "node server/setup.mjs",
-    "check": "node --check server/index.mjs && node --check server/setup.mjs && node --check server/database.mjs"
+    "build:worker": "node scripts/build-worker.mjs",
+    "check": "node --check server/index.mjs && node --check server/setup.mjs && node --check server/database.mjs && node --check worker/worker-source.js"
   }
 }

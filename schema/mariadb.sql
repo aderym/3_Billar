@@ -5,6 +5,34 @@ CREATE TABLE IF NOT EXISTS sessions (token_hash VARCHAR(255) PRIMARY KEY, accoun
 CREATE INDEX IF NOT EXISTS sessions_account ON sessions(account_id);
 CREATE TABLE IF NOT EXISTS messages (id VARCHAR(100) PRIMARY KEY, group_id VARCHAR(100) NOT NULL, account_id VARCHAR(100), kind VARCHAR(40) NOT NULL, body TEXT NOT NULL, match_id VARCHAR(100), created_at BIGINT NOT NULL, CONSTRAINT messages_group_fk FOREIGN KEY (group_id) REFERENCES groups(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE INDEX IF NOT EXISTS messages_group_time ON messages(group_id, created_at);
+CREATE TABLE IF NOT EXISTS support_conversations (
+  id VARCHAR(100) PRIMARY KEY,
+  group_id VARCHAR(100) NOT NULL UNIQUE,
+  owner_account_id VARCHAR(100) NOT NULL,
+  admin_account_id VARCHAR(100) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'open',
+  last_message_at BIGINT NOT NULL DEFAULT 0,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT support_conversations_group_fk FOREIGN KEY (group_id) REFERENCES groups(id),
+  CONSTRAINT support_conversations_owner_fk FOREIGN KEY (owner_account_id) REFERENCES accounts(id),
+  CONSTRAINT support_conversations_admin_fk FOREIGN KEY (admin_account_id) REFERENCES accounts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE INDEX IF NOT EXISTS support_conversations_owner ON support_conversations(owner_account_id, updated_at);
+CREATE INDEX IF NOT EXISTS support_conversations_admin ON support_conversations(admin_account_id, updated_at);
+CREATE TABLE IF NOT EXISTS support_messages (
+  id VARCHAR(100) PRIMARY KEY,
+  conversation_id VARCHAR(100) NOT NULL,
+  sender_account_id VARCHAR(100) NOT NULL,
+  sender_role VARCHAR(20) NOT NULL,
+  body TEXT NOT NULL,
+  read_at BIGINT NULL,
+  created_at BIGINT NOT NULL,
+  CONSTRAINT support_messages_conversation_fk FOREIGN KEY (conversation_id) REFERENCES support_conversations(id),
+  CONSTRAINT support_messages_sender_fk FOREIGN KEY (sender_account_id) REFERENCES accounts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE INDEX IF NOT EXISTS support_messages_conversation_time ON support_messages(conversation_id, created_at);
+CREATE INDEX IF NOT EXISTS support_messages_unread ON support_messages(conversation_id, read_at, created_at);
 CREATE TABLE IF NOT EXISTS signals (id BIGINT AUTO_INCREMENT PRIMARY KEY, group_id VARCHAR(100) NOT NULL, room VARCHAR(100) NOT NULL, role VARCHAR(20) NOT NULL, client VARCHAR(80) NOT NULL, type VARCHAR(20) NOT NULL, data TEXT, created_at BIGINT NOT NULL, CONSTRAINT signals_group_fk FOREIGN KEY (group_id) REFERENCES groups(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE INDEX IF NOT EXISTS signals_room ON signals(group_id, room, id);
 CREATE TABLE IF NOT EXISTS tournament_history (group_id VARCHAR(100) NOT NULL, event_key VARCHAR(100) NOT NULL, name VARCHAR(80) NOT NULL, state LONGTEXT NOT NULL, ended_at BIGINT NOT NULL, PRIMARY KEY (group_id, event_key), CONSTRAINT tournament_history_group_fk FOREIGN KEY (group_id) REFERENCES groups(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
