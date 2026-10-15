@@ -44,6 +44,7 @@
       save: 'Save',
       cancel: 'Cancel',
       close: 'Close',
+      supportDescription: 'Private communication with the platform owner. Players cannot see these messages.',
       yes: 'Yes',
       no: 'No'
     },
@@ -89,6 +90,7 @@
       save: 'Guardar',
       cancel: 'Cancelar',
       close: 'Cerrar',
+      supportDescription: 'Comunicación privada con el propietario de la plataforma. Los jugadores no pueden ver estos mensajes.',
       yes: 'Sí',
       no: 'No'
     }
@@ -609,6 +611,18 @@
     ,['NEXT MATCH', 'PRÓXIMA PARTIDA']
     ,['PRO AIM · VIRTUAL 8-BALL', 'PRO AIM · 8-BALL VIRTUAL']
     ,['Lobby', 'Sala']
+    ,['OSP · SUPPORT', 'OSP · SOPORTE']
+    ,['Messages with OSP', 'Mensajes con OSP']
+    ,['Private communication with the platform owner. Players cannot see these messages.', 'Comunicación privada con el propietario de la plataforma. Los jugadores no pueden ver estos mensajes.']
+    ,['Private communication with the platform owner. Jugadores cannot see these messages.', 'Comunicación privada con el propietario de la plataforma. Los jugadores no pueden ver estos mensajes.']
+    ,['Write a message…', 'Escribe un mensaje…']
+    ,['Send message', 'Enviar mensaje']
+    ,['No messages yet.', 'Todavía no hay mensajes.']
+    ,['Select a venue to open the conversation.', 'Selecciona un local para abrir la conversación.']
+    ,['Owner ↔ administrator', 'Propietario ↔ administrador']
+    ,['Private communication for venue operations, payments and incidents.', 'Comunicación privada para operaciones, pagos e incidentes del local.']
+    ,['No venues available.', 'No hay locales disponibles.']
+    ,['Close', 'Cerrar']
   ] : [];
 
   let language = localStorage.getItem('osp-language') || 'es';

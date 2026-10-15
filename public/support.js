@@ -19,7 +19,7 @@
     return `<section id="owner-support-panel" class="support-panel"><div class="support-heading"><div><div class="eyebrow">OSP · SUPPORT</div><h2>Owner ↔ administrator</h2><p class="inline-help">Private communication for venue operations, payments and incidents.</p></div><button class="btn small ghost" data-support-close>Close</button></div><div class="support-layout"><div class="support-venue-list">${list || '<div class="empty">No venues available.</div>'}</div><div class="support-conversation">${selected ? `<h3>${esc(selected.venue)} <small>· ${esc(selected.admin_name || 'Administrator')}</small></h3>` : ''}${messagesView(ownerData, 'owner')}</div></div></section>`;
   }
   function adminPanel() {
-    return `<section id="admin-support-panel" class="card support-panel"><div class="support-heading"><div><div class="eyebrow">OSP · SUPPORT</div><h2>Messages with OSP</h2><p class="inline-help">Private communication with the platform owner. Players cannot see these messages.</p></div></div>${messagesView(adminData, 'admin')}</section>`;
+    return `<section id="admin-support-panel" class="card support-panel"><div class="support-heading"><div><div class="eyebrow">OSP · SUPPORT</div><h2>Messages with OSP</h2><p class="inline-help" data-i18n="supportDescription">Private communication with the platform owner. Players cannot see these messages.</p></div></div>${messagesView(adminData, 'admin')}</section>`;
   }
   async function loadOwner(selected = ownerVenue) {
     ownerVenues = (await request('/api/owner/support')).venues || [];
